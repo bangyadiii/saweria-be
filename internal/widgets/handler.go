@@ -65,7 +65,7 @@ func (h *Handler) Info(c *gin.Context) {
 	})
 }
 
-// GET /widgets/leaderboard?streamKey=<plainKey>&limit=10
+// GET /widgets/leaderboard?streamKey=<plainKey>&limit=10&timeRange=all
 func (h *Handler) Leaderboard(c *gin.Context) {
 	_, user, ok := h.resolveStreamKey(c)
 	if !ok {
@@ -77,7 +77,9 @@ func (h *Handler) Leaderboard(c *gin.Context) {
 		limit = 10
 	}
 
-	list, err := h.repo.GetLeaderboard(c.Request.Context(), user.ID, limit)
+	timeRange := c.DefaultQuery("timeRange", "all")
+
+	list, err := h.repo.GetLeaderboard(c.Request.Context(), user.ID, limit, timeRange)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return

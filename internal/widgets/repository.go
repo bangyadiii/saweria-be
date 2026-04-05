@@ -8,12 +8,12 @@ import (
 )
 
 type LeaderboardEntry struct {
-	DonorName string `db:"donor_name" json:"donorName"`
+	DonorName string `db:"donor_name" json:"donor_name"`
 	Total     int64  `db:"total"      json:"total"`
 }
 
 type Repository interface {
-	GetLeaderboard(ctx context.Context, streamerID string, limit int) ([]LeaderboardEntry, error)
+	GetLeaderboard(ctx context.Context, streamerID string, limit int, timeRange string) ([]LeaderboardEntry, error)
 	GetTotalRaised(ctx context.Context, streamerID string) (int64, error)
 }
 
@@ -25,17 +25,29 @@ func NewRepository(db *sqlx.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) GetLeaderboard(ctx context.Context, streamerID string, limit int) ([]LeaderboardEntry, error) {
-	var list []LeaderboardEntry
-	err := r.db.SelectContext(ctx, &list, `
+func (r *repository) GetLeaderboard(ctx context.Context, streamerID string, limit int, timeRange string) ([]LeaderboardEntry, error) {
+	var dateFilter string
+	switch timeRange {
+	case "yearly":
+		dateFilter = "AND created_at >= date_trunc('year', NOW())"
+	case "monthly":
+		dateFilter = "AND created_at >= date_trunc('month', NOW())"
+	case "weekly":
+		dateFilter = "AND created_at >= date_trunc('week', NOW())"
+	default:
+		dateFilter = ""
+	}
+
+	query := fmt.Sprintf(`
 		SELECT donor_name, SUM(amount) AS total
 		FROM donations
-		WHERE streamer_id = $1 AND payment_status = 'success'
+		WHERE streamer_id = $1 AND payment_status = 'success' %s
 		GROUP BY donor_name
 		ORDER BY total DESC
-		LIMIT $2`,
-		streamerID, limit,
-	)
+		LIMIT $2`, dateFilter)
+
+	var list []LeaderboardEntry
+	err := r.db.SelectContext(ctx, &list, query, streamerID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("widgets.GetLeaderboard: %w", err)
 	}
@@ -55,3 +67,4 @@ func (r *repository) GetTotalRaised(ctx context.Context, streamerID string) (int
 	}
 	return total, nil
 }
+

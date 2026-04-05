@@ -1,11 +1,14 @@
 package overlay
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+
+	"saweria-be/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,13 +20,19 @@ type WSHub interface {
 	GetSubathonSeconds(hash string) (totalSeconds int, running bool, ok bool)
 }
 
-type Handler struct {
-	service Service
-	hub     WSHub
+// UserRepository is the minimal user-lookup interface needed by overlay handler.
+type UserRepository interface {
+	FindByUsername(ctx context.Context, username string) (*domain.User, error)
 }
 
-func NewHandler(service Service, hub WSHub) *Handler {
-	return &Handler{service: service, hub: hub}
+type Handler struct {
+	service  Service
+	hub      WSHub
+	userRepo UserRepository
+}
+
+func NewHandler(service Service, hub WSHub, userRepo UserRepository) *Handler {
+	return &Handler{service: service, hub: hub, userRepo: userRepo}
 }
 
 // effectiveHash returns the stream key hash to use for WS broadcasting.
@@ -448,4 +457,45 @@ func (h *Handler) SubathonControl(c *gin.Context) {
 	msg := fmt.Sprintf(`{"type":"subathon_state","total_seconds":%d,"running":%t}`, curSecs, isRunning)
 	h.hub.Broadcast(keyHash, []byte(msg))
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+}
+
+func (h *Handler) UpdateLeaderboardSettings(c *gin.Context) {
+	userID := c.GetString("user_id")
+	var req LeaderboardSettingsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.service.UpdateLeaderboardSettings(c.Request.Context(), userID, req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+}
+
+// GetPublicMediashare returns the mediashare settings a donor needs to decide
+// whether to show the media input section on the public donation page.
+// This endpoint is intentionally unauthenticated.
+func (h *Handler) GetPublicMediashare(c *gin.Context) {
+	username := c.Param("username")
+	u, err := h.userRepo.FindByUsername(c.Request.Context(), username)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	settings, err := h.service.GetSettings(c.Request.Context(), u.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ok", "data": gin.H{
+		"ms_enabled":            settings.MsEnabled,
+		"minimum_mediashare":    settings.MinimumMediashare,
+		"ms_yt_shorts":          settings.MsYtShorts,
+		"ms_tiktok":             settings.MsTiktok,
+		"ms_ig_reels":           settings.MsIgReels,
+		"ms_voice_note":         settings.MsVoiceNote,
+		"ms_max_video_duration": settings.MsMaxVideoDuration,
+		"ms_max_audio_duration": settings.MsMaxAudioDuration,
+	}})
 }

@@ -15,6 +15,10 @@ type User struct {
 	DisplayName  string    `db:"display_name"  json:"displayName"`
 	Bio          string    `db:"bio"           json:"bio"`
 	Balance      int64     `db:"balance"       json:"balance"`
+	// Webhook settings
+	WebhookEnabled bool    `db:"webhook_enabled" json:"webhookEnabled"`
+	WebhookURL     *string `db:"webhook_url"     json:"webhookUrl"`
+	WebhookToken   *string `db:"webhook_token"   json:"webhookToken"`
 	CreatedAt    time.Time `db:"created_at"    json:"createdAt"`
 	UpdatedAt    time.Time `db:"updated_at"    json:"updatedAt"`
 }
@@ -83,40 +87,51 @@ type OverlaySettings struct {
 	SubFontWeight     int       `db:"sub_font_weight"     json:"sub_font_weight"`
 	SubFontContent    string    `db:"sub_font_content"    json:"sub_font_content"`
 	SubTimeRules      json.RawMessage `db:"sub_time_rules"      json:"sub_time_rules"`
+	// Leaderboard widget settings
+	LbTitle       string `db:"lb_title"        json:"lb_title"`
+	LbBgColor     string `db:"lb_bg_color"     json:"lb_bg_color"`
+	LbTextColor   string `db:"lb_text_color"   json:"lb_text_color"`
+	LbFontWeight  int    `db:"lb_font_weight"  json:"lb_font_weight"`
+	LbNoBorder    bool   `db:"lb_no_border"    json:"lb_no_border"`
+	LbHideAmount  bool   `db:"lb_hide_amount"  json:"lb_hide_amount"`
+	LbFontTitle   string `db:"lb_font_title"   json:"lb_font_title"`
+	LbFontContent string `db:"lb_font_content" json:"lb_font_content"`
+	LbTimeRange   string `db:"lb_time_range"   json:"lb_time_range"`
+	LbLimit       int    `db:"lb_limit"        json:"lb_limit"`
 	CreatedAt         time.Time `db:"created_at"       json:"created_at"`
 	UpdatedAt         time.Time `db:"updated_at"       json:"updated_at"`
 }
 
 type Donation struct {
 	ID              string    `db:"id"                   json:"id"`
-	StreamerID      string    `db:"streamer_id"          json:"streamerId"`
-	DonorName       string    `db:"donor_name"           json:"donorName"`
+	StreamerID      string    `db:"streamer_id"          json:"streamer_id"`
+	DonorName       string    `db:"donor_name"           json:"donor_name"`
 	Amount          int64     `db:"amount"               json:"amount"`
-	NetAmount       int64     `db:"net_amount"           json:"netAmount"`
-	PlatformFee     int64     `db:"platform_fee"         json:"platformFee"`
+	NetAmount       int64     `db:"net_amount"           json:"net_amount"`
+	PlatformFee     int64     `db:"platform_fee"         json:"platform_fee"`
 	Message         string    `db:"message"              json:"message"`
-	MediaURL        *string   `db:"media_url"            json:"mediaUrl"`
-	MediaShown      bool      `db:"media_shown"          json:"mediaShown"`
-	PaymentMethod   string    `db:"payment_method"       json:"paymentMethod"`
-	PaymentStatus   string    `db:"payment_status"       json:"paymentStatus"`
-	MidtransOrderID string    `db:"midtrans_order_id" json:"midtransOrderId"`
-	PaymentToken    string    `db:"payment_token"     json:"paymentToken"`
-	CreatedAt       time.Time `db:"created_at"           json:"createdAt"`
-	UpdatedAt       time.Time `db:"updated_at"           json:"updatedAt"`
+	MediaURL        *string   `db:"media_url"            json:"media_url"`
+	MediaShown      bool      `db:"media_shown"          json:"media_shown"`
+	PaymentMethod   string    `db:"payment_method"       json:"payment_method"`
+	PaymentStatus   string    `db:"payment_status"       json:"payment_status"`
+	MidtransOrderID string    `db:"midtrans_order_id" json:"midtrans_order_id"`
+	PaymentToken    string    `db:"payment_token"     json:"payment_token"`
+	CreatedAt       time.Time `db:"created_at"           json:"created_at"`
+	UpdatedAt       time.Time `db:"updated_at"           json:"updated_at"`
 }
 
 type Cashout struct {
 	ID            string    `db:"id"             json:"id"`
-	UserID        string    `db:"user_id"        json:"userId"`
+	UserID        string    `db:"user_id"        json:"user_id"`
 	Amount        int64     `db:"amount"         json:"amount"`
 	Fee           int64     `db:"fee"            json:"fee"`
-	NetAmount     int64     `db:"net_amount"     json:"netAmount"`
-	BankName      string    `db:"bank_name"      json:"bankName"`
-	AccountNumber string    `db:"account_number" json:"accountNumber"`
-	AccountName   string    `db:"account_name"   json:"accountName"`
+	NetAmount     int64     `db:"net_amount"     json:"net_amount"`
+	BankName      string    `db:"bank_name"      json:"bank_name"`
+	AccountNumber string    `db:"account_number" json:"account_number"`
+	AccountName   string    `db:"account_name"   json:"account_name"`
 	Status        string    `db:"status"         json:"status"`
-	CreatedAt     time.Time `db:"created_at"     json:"createdAt"`
-	UpdatedAt     time.Time `db:"updated_at"     json:"updatedAt"`
+	CreatedAt     time.Time `db:"created_at"     json:"created_at"`
+	UpdatedAt     time.Time `db:"updated_at"     json:"updated_at"`
 }
 
 // Payment status constants

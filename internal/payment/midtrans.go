@@ -73,6 +73,12 @@ func (m *midtransClient) CreateCharge(orderID string, amount int64, donorName, p
 			TransactionDetails: txDetail,
 			CustomerDetails:    customer,
 		}
+	case "qris":
+		req = &coreapi.ChargeReq{
+			PaymentType:        coreapi.PaymentTypeQris,
+			TransactionDetails: txDetail,
+			CustomerDetails:    customer,
+		}
 	default:
 		return nil, fmt.Errorf("midtrans.CreateCharge: unsupported payment type %q", paymentType)
 	}

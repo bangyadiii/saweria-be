@@ -1,0 +1,4 @@
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS webhook_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS webhook_url     TEXT,
+    ADD COLUMN IF NOT EXISTS webhook_token   TEXT;

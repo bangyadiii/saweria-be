@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrStreamerNotFound = errors.New("streamer not found")
-	ErrInvalidMediaURL  = errors.New("media URL must be from youtube.com or tiktok.com")
+	ErrInvalidMediaURL  = errors.New("media URL must be from youtube.com, tiktok.com, or instagram.com")
 	ErrNotFound         = errors.New("donation not found")
 )
 
@@ -34,17 +34,17 @@ type MidtransClient interface {
 }
 
 type ChargeResponse struct {
-	OrderID     string `json:"orderId"`
-	PaymentType string `json:"paymentType"`
+	OrderID     string `json:"order_id"`
+	PaymentType string `json:"payment_type"`
 	// bank_transfer
 	Bank     string `json:"bank,omitempty"`
-	VANumber string `json:"vaNumber,omitempty"`
+	VANumber string `json:"va_number,omitempty"`
 	// mandiri echannel
-	BillerCode string `json:"billerCode,omitempty"`
-	BillKey    string `json:"billKey,omitempty"`
+	BillerCode string `json:"biller_code,omitempty"`
+	BillKey    string `json:"bill_key,omitempty"`
 	// e-wallet
-	QRCodeURL   string `json:"qrCodeUrl,omitempty"`
-	DeepLinkURL string `json:"deepLinkUrl,omitempty"`
+	QRCodeURL   string `json:"qr_code_url,omitempty"`
+	DeepLinkURL string `json:"deep_link_url,omitempty"`
 }
 
 type SubmitRequest struct {
@@ -52,7 +52,7 @@ type SubmitRequest struct {
 	Amount      int64  `json:"amount"      binding:"required,min=1000"`
 	Message     string `json:"message"`
 	MediaURL    string `json:"mediaUrl"`
-	PaymentType string `json:"paymentType" binding:"required"` // bank_transfer | echannel | gopay | shopeepay
+	PaymentType string `json:"paymentType" binding:"required"` // bank_transfer | echannel | gopay | shopeepay | qris
 	Bank        string `json:"bank"`                           // bca | bni | bri | permata | mandiri
 }
 
@@ -166,7 +166,7 @@ func (s *service) GetDetail(ctx context.Context, streamerID, donationID string) 
 	return d, nil
 }
 
-var allowedMediaHosts = []string{"youtube.com", "youtu.be", "tiktok.com", "www.youtube.com", "www.tiktok.com"}
+var allowedMediaHosts = []string{"youtube.com", "youtu.be", "tiktok.com", "www.youtube.com", "www.tiktok.com", "instagram.com", "www.instagram.com"}
 
 func validateMediaURL(rawURL string) error {
 	parsed, err := url.Parse(rawURL)

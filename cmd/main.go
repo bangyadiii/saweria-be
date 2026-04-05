@@ -69,7 +69,7 @@ func main() {
 	// ── handlers ──────────────────────────────────────────────────────────────
 	authHandler := auth.NewHandler(authSvc, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.BaseURL)
 	userHandler := user.NewHandler(userSvc)
-	overlayHandler := overlay.NewHandler(overlaySvc, hub)
+	overlayHandler := overlay.NewHandler(overlaySvc, hub, userRepo)
 	donationHandler := donation.NewHandler(donationSvc, cfg.PlatformFeePercent)
 	paymentHandler := payment.NewHandler(paymentSvc, cfg.MidtransServerKey)
 	walletHandler := wallet.NewHandler(walletSvc)
@@ -105,6 +105,10 @@ func main() {
 		u.GET("/me", jwtMiddleware, userHandler.GetMe)
 		u.PUT("/me", jwtMiddleware, userHandler.UpdateMe)
 		u.GET("/:username", userHandler.GetPublicProfile)
+		u.GET("/:username/mediashare", overlayHandler.GetPublicMediashare)
+		u.PUT("/me/webhook", jwtMiddleware, userHandler.UpdateWebhookSettings)
+		u.POST("/me/webhook/reset-token", jwtMiddleware, userHandler.ResetWebhookToken)
+		u.POST("/me/webhook/test", jwtMiddleware, userHandler.TestWebhook)
 	}
 
 	// Overlay (all protected)
@@ -122,6 +126,7 @@ func main() {
 		o.PUT("/milestone", overlayHandler.UpdateMilestoneSettings)
 		o.PUT("/subathon", overlayHandler.UpdateSubathonSettings)
 		o.POST("/subathon/control", overlayHandler.SubathonControl)
+		o.PUT("/leaderboard", overlayHandler.UpdateLeaderboardSettings)
 		o.POST("/test-alert", overlayHandler.TestAlert)
 		o.POST("/test-mediashare", overlayHandler.TestMediashare)
 		o.POST("/control", overlayHandler.Control)

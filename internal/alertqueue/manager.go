@@ -153,7 +153,7 @@ func buildMessage(d *domain.Donation, s *domain.OverlaySettings) []byte {
 	}
 	durationMS := int(alertDuration(s).Milliseconds())
 	msg := fmt.Sprintf(
-		`{"event":"donation","id":%q,"donorName":%q,"amount":%d,"message":%q,"mediaUrl":%s,"mediaShown":%s,"duration":%d}`,
+		`{"event":"donation","id":%q,"donor_name":%q,"amount":%d,"message":%q,"media_url":%s,"media_shown":%s,"duration":%d}`,
 		d.ID, d.DonorName, d.Amount, d.Message, nullableStr(d.MediaURL), mediaShown, durationMS,
 	)
 	return []byte(msg)

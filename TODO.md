@@ -38,6 +38,7 @@ Legend: ✅ Selesai · ❌ Belum dibuat · 🔧 Sebagian
 - ✅ `migrations/009_create_milestone_settings.up/down.sql` — tabel milestone settings
 - ✅ `migrations/010_add_tts_to_alert.up/down.sql` — kolom TTS di alert rules
 - ✅ `migrations/011_create_subathon_settings.up/down.sql` — tabel subathon settings & time rules
+- ✅ `migrations/012_add_leaderboard_settings.up/down.sql` — kolom lb_* di overlay_settings (judul, warna, font, time range, limit, hide amount)
 
 ---
 
@@ -72,6 +73,7 @@ Legend: ✅ Selesai · ❌ Belum dibuat · 🔧 Sebagian
     - `POST /overlay/test-mediashare` — broadcast WS mediashare ke widget
     - `PUT /overlay/milestone`
     - `PUT /overlay/subathon`, `POST /overlay/subathon/control` — start/pause/add_time + broadcast `subathon_state`
+    - `PUT /overlay/leaderboard` — simpan pengaturan tampilan leaderboard
 
 ---
 
@@ -121,8 +123,8 @@ Legend: ✅ Selesai · ❌ Belum dibuat · 🔧 Sebagian
 
 ## 10. Widgets (`internal/widgets/`)
 
-- ✅ `repository.go` — lookup by stream key, leaderboard query
-- ✅ `handler.go` — `GET /widgets/info?streamKey=`, `GET /widgets/leaderboard?streamKey=`
+- ✅ `repository.go` — lookup by stream key, leaderboard query dengan filter `timeRange` (all/yearly/monthly/weekly)
+- ✅ `handler.go` — `GET /widgets/info?streamKey=`, `GET /widgets/leaderboard?streamKey=&limit=10&timeRange=all`
 
 ---
 

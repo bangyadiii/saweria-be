@@ -26,6 +26,7 @@ type Service interface {
 	UpdateQRSettings(ctx context.Context, userID string, req QRSettingsRequest) error
 	UpdateMilestoneSettings(ctx context.Context, userID string, req MilestoneSettingsRequest) error
 	UpdateSubathonSettings(ctx context.Context, userID string, req SubathonSettingsRequest) error
+	UpdateLeaderboardSettings(ctx context.Context, userID string, req LeaderboardSettingsRequest) error
 }
 
 type AlertRulesRequest struct {
@@ -100,6 +101,19 @@ type SubathonSettingsRequest struct {
 	FontWeight     int                `json:"sub_font_weight"`
 	FontContent    string             `json:"sub_font_content"`
 	TimeRules      []SubathonTimeRule `json:"sub_time_rules"`
+}
+
+type LeaderboardSettingsRequest struct {
+	Title       string `json:"lb_title"`
+	BgColor     string `json:"lb_bg_color"`
+	TextColor   string `json:"lb_text_color"`
+	FontWeight  int    `json:"lb_font_weight"`
+	NoBorder    bool   `json:"lb_no_border"`
+	HideAmount  bool   `json:"lb_hide_amount"`
+	FontTitle   string `json:"lb_font_title"`
+	FontContent string `json:"lb_font_content"`
+	TimeRange   string `json:"lb_time_range"`
+	Limit       int    `json:"lb_limit"`
 }
 
 type service struct {
@@ -268,5 +282,27 @@ func (s *service) UpdateSubathonSettings(ctx context.Context, userID string, req
 		FontWeight:     req.FontWeight,
 		FontContent:    req.FontContent,
 		TimeRules:      req.TimeRules,
+	})
+}
+
+func (s *service) UpdateLeaderboardSettings(ctx context.Context, userID string, req LeaderboardSettingsRequest) error {
+	if _, err := s.GetSettings(ctx, userID); err != nil {
+		return err
+	}
+	limit := req.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+	return s.repo.UpdateLeaderboardSettings(ctx, userID, LeaderboardSettingsFields{
+		Title:       req.Title,
+		BgColor:     req.BgColor,
+		TextColor:   req.TextColor,
+		FontWeight:  req.FontWeight,
+		NoBorder:    req.NoBorder,
+		HideAmount:  req.HideAmount,
+		FontTitle:   req.FontTitle,
+		FontContent: req.FontContent,
+		TimeRange:   req.TimeRange,
+		Limit:       limit,
 	})
 }

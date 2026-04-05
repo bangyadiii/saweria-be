@@ -16,10 +16,10 @@ var (
 const minimumCashout int64 = 50_000
 
 type CashoutRequest struct {
-	Amount        int64  `json:"amount"         binding:"required,min=50000"`
-	BankName      string `json:"bankName"       binding:"required"`
-	AccountNumber string `json:"accountNumber"  binding:"required"`
-	AccountName   string `json:"accountName"    binding:"required"`
+	Amount        int64  `json:"amount"          binding:"required,min=50000"`
+	BankName      string `json:"bank_name"       binding:"required"`
+	AccountNumber string `json:"account_number"  binding:"required"`
+	AccountName   string `json:"account_name"    binding:"required"`
 }
 
 type Service interface {

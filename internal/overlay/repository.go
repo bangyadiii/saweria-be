@@ -24,6 +24,7 @@ type Repository interface {
 	UpdateQRSettings(ctx context.Context, userID string, f QRSettingsFields) error
 	UpdateMilestoneSettings(ctx context.Context, userID string, f MilestoneSettingsFields) error
 	UpdateSubathonSettings(ctx context.Context, userID string, f SubathonSettingsFields) error
+	UpdateLeaderboardSettings(ctx context.Context, userID string, f LeaderboardSettingsFields) error
 }
 
 type AlertRulesFields struct {
@@ -92,6 +93,19 @@ type SubathonTimeRule struct {
 	Hours     int   `json:"hours"`
 	Minutes   int   `json:"minutes"`
 	Seconds   int   `json:"seconds"`
+}
+
+type LeaderboardSettingsFields struct {
+	Title       string
+	BgColor     string
+	TextColor   string
+	FontWeight  int
+	NoBorder    bool
+	HideAmount  bool
+	FontTitle   string
+	FontContent string
+	TimeRange   string
+	Limit       int
 }
 
 type SubathonSettingsFields struct {
@@ -346,3 +360,29 @@ func (r *repository) UpdateSubathonSettings(ctx context.Context, userID string, 
 	}
 	return nil
 }
+
+func (r *repository) UpdateLeaderboardSettings(ctx context.Context, userID string, f LeaderboardSettingsFields) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE overlay_settings
+		SET lb_title        = $1,
+		    lb_bg_color     = $2,
+		    lb_text_color   = $3,
+		    lb_font_weight  = $4,
+		    lb_no_border    = $5,
+		    lb_hide_amount  = $6,
+		    lb_font_title   = $7,
+		    lb_font_content = $8,
+		    lb_time_range   = $9,
+		    lb_limit        = $10,
+		    updated_at      = NOW()
+		WHERE user_id = $11`,
+		f.Title, f.BgColor, f.TextColor, f.FontWeight,
+		f.NoBorder, f.HideAmount, f.FontTitle, f.FontContent,
+		f.TimeRange, f.Limit, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("overlay.UpdateLeaderboardSettings: %w", err)
+	}
+	return nil
+}
+
