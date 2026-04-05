@@ -1,0 +1,20 @@
+CREATE TABLE overlay_settings (
+    id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id               UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    gif_setting           BOOLEAN NOT NULL DEFAULT false,
+    tts_variant           VARCHAR(50),
+    minimum_alert         BIGINT NOT NULL DEFAULT 0,
+    minimum_mediashare    BIGINT NOT NULL DEFAULT 0,
+    minimum_tts           BIGINT NOT NULL DEFAULT 0,
+    background_color      VARCHAR(20),
+    highlight_color       VARCHAR(20),
+    text_color            VARCHAR(20),
+    template_text         TEXT NOT NULL DEFAULT '[nama] baru saja memberikan [nominal]',
+    notification_duration INTEGER NOT NULL DEFAULT 5,
+    filter_kata           TEXT NOT NULL DEFAULT '',
+    sound_url             TEXT,
+    stream_key_hash       TEXT UNIQUE,
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id)
+);

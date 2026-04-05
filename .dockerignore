@@ -1,0 +1,10 @@
+bin/
+*.exe
+*.test
+.git
+.gitignore
+*.md
+.env*
+!.env.example
+Dockerfile
+.dockerignore
