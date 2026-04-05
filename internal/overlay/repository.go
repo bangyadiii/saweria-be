@@ -2,6 +2,7 @@ package overlay
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"saweria-be/internal/domain"
@@ -22,6 +23,7 @@ type Repository interface {
 	UpdateMediashareTemplate(ctx context.Context, userID string, f MediashareTemplateFields) error
 	UpdateQRSettings(ctx context.Context, userID string, f QRSettingsFields) error
 	UpdateMilestoneSettings(ctx context.Context, userID string, f MilestoneSettingsFields) error
+	UpdateSubathonSettings(ctx context.Context, userID string, f SubathonSettingsFields) error
 }
 
 type AlertRulesFields struct {
@@ -83,6 +85,26 @@ type MilestoneSettingsFields struct {
 	FontWeight  int
 	FontTitle   string
 	FontContent string
+}
+
+type SubathonTimeRule struct {
+	MinAmount int64 `json:"min_amount"`
+	Hours     int   `json:"hours"`
+	Minutes   int   `json:"minutes"`
+	Seconds   int   `json:"seconds"`
+}
+
+type SubathonSettingsFields struct {
+	InitialHours   int
+	InitialMinutes int
+	InitialSeconds int
+	NoBorder       bool
+	BgColor        string
+	AutoPlay       bool
+	TextColor      string
+	FontWeight     int
+	FontContent    string
+	TimeRules      []SubathonTimeRule
 }
 
 type repository struct {
@@ -292,6 +314,35 @@ func (r *repository) UpdateMilestoneSettings(ctx context.Context, userID string,
 	)
 	if err != nil {
 		return fmt.Errorf("overlay.UpdateMilestoneSettings: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) UpdateSubathonSettings(ctx context.Context, userID string, f SubathonSettingsFields) error {
+	rulesJSON, err := json.Marshal(f.TimeRules)
+	if err != nil {
+		return fmt.Errorf("overlay.UpdateSubathonSettings: marshal rules: %w", err)
+	}
+	_, err = r.db.ExecContext(ctx, `
+		UPDATE overlay_settings
+		SET sub_initial_hours   = $1,
+		    sub_initial_minutes = $2,
+		    sub_initial_seconds = $3,
+		    sub_no_border       = $4,
+		    sub_bg_color        = $5,
+		    sub_auto_play       = $6,
+		    sub_text_color      = $7,
+		    sub_font_weight     = $8,
+		    sub_font_content    = $9,
+		    sub_time_rules      = $10,
+		    updated_at          = NOW()
+		WHERE user_id = $11`,
+		f.InitialHours, f.InitialMinutes, f.InitialSeconds,
+		f.NoBorder, f.BgColor, f.AutoPlay, f.TextColor,
+		f.FontWeight, f.FontContent, rulesJSON, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("overlay.UpdateSubathonSettings: %w", err)
 	}
 	return nil
 }

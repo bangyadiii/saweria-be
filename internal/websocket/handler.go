@@ -59,6 +59,13 @@ func (h *Handler) Connect(c *gin.Context) {
 	h.hub.Register(hash, conn)
 	defer h.hub.Unregister(hash, conn)
 
+	// If a subathon timer is active for this key, send its current state immediately.
+	if secs, isRunning, ok := h.hub.GetSubathonSeconds(hash); ok {
+		msg := fmt.Sprintf(`{"type":"subathon_state","total_seconds":%d,"running":%t}`, secs, isRunning)
+		conn.SetWriteDeadline(time.Now().Add(writeWait))
+		_ = conn.WriteMessage(gws.TextMessage, []byte(msg))
+	}
+
 	// set initial read deadline — will be extended on every pong received
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 

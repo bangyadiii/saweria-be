@@ -2,6 +2,7 @@ package overlay
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,6 +13,8 @@ import (
 // WSHub broadcasts raw JSON to all WS clients subscribed to a stream key hash.
 type WSHub interface {
 	Broadcast(streamKeyHash string, message []byte)
+	SetSubathonState(hash string, totalSeconds int, running bool)
+	GetSubathonSeconds(hash string) (totalSeconds int, running bool, ok bool)
 }
 
 type Handler struct {
@@ -195,6 +198,20 @@ func (h *Handler) UpdateMilestoneSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
+func (h *Handler) UpdateSubathonSettings(c *gin.Context) {
+	userID := c.GetString("user_id")
+	var req SubathonSettingsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.service.UpdateSubathonSettings(c.Request.Context(), userID, req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+}
+
 // TestAlert broadcasts a fake donation_alert to the user's widgets via WebSocket.
 func (h *Handler) TestAlert(c *gin.Context) {
 	userID := c.GetString("user_id")
@@ -333,6 +350,102 @@ func (h *Handler) Control(c *gin.Context) {
 	}
 
 	msg := fmt.Sprintf(`{"type":"control","action":%q}`, body.Action)
+	h.hub.Broadcast(keyHash, []byte(msg))
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+}
+
+// TestSubathon broadcasts a fake donation_alert that triggers the first configured subathon time rule.
+func (h *Handler) TestSubathon(c *gin.Context) {
+	userID := c.GetString("user_id")
+	settings, err := h.service.GetSettings(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	keyHash := effectiveHash(settings.StreamKeyHash, settings.StreamKey)
+	if keyHash == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "stream key not set"})
+		return
+	}
+
+	// Use the first configured rule's min_amount so the widget adds time; fallback to 10000
+	amount := int64(10000)
+	if len(settings.SubTimeRules) > 0 {
+		var rules []SubathonTimeRule
+		if err := json.Unmarshal(settings.SubTimeRules, &rules); err == nil && len(rules) > 0 {
+			amount = rules[0].MinAmount
+			if amount == 0 {
+				amount = 10000
+			}
+		}
+	}
+
+	msg := fmt.Sprintf(
+		`{"type":"donation_alert","donor_name":"Tes User","amount":%d,"message":"Tes Subathon!"}`,
+		amount,
+	)
+	h.hub.Broadcast(keyHash, []byte(msg))
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+}
+
+// SubathonControl mutates the hub's in-memory timer state and broadcasts
+// the authoritative subathon_state to all connected widgets.
+// Because the hub tracks totalSeconds + lastUpdated, remaining time is correctly
+// computed even after the timer has been paused for hours.
+func (h *Handler) SubathonControl(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	var body struct {
+		Action  string `json:"action"`
+		Hours   int    `json:"hours"`
+		Minutes int    `json:"minutes"`
+		Seconds int    `json:"seconds"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	validActions := map[string]bool{"start": true, "pause": true, "add_time": true}
+	if !validActions[body.Action] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid action"})
+		return
+	}
+
+	settings, err := h.service.GetSettings(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	keyHash := effectiveHash(settings.StreamKeyHash, settings.StreamKey)
+	if keyHash == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "stream key not set"})
+		return
+	}
+
+	// Read current state; if none exists yet, initialize from saved settings.
+	curSecs, isRunning, ok := h.hub.GetSubathonSeconds(keyHash)
+	if !ok {
+		curSecs = settings.SubInitialHours*3600 + settings.SubInitialMinutes*60 + settings.SubInitialSeconds
+		isRunning = false
+	}
+
+	switch body.Action {
+	case "start":
+		isRunning = true
+	case "pause":
+		// curSecs already holds the computed remaining time (hub accounts for elapsed).
+		isRunning = false
+	case "add_time":
+		curSecs += body.Hours*3600 + body.Minutes*60 + body.Seconds
+	}
+
+	// Persist new state so future reconnects get the correct value.
+	h.hub.SetSubathonState(keyHash, curSecs, isRunning)
+
+	msg := fmt.Sprintf(`{"type":"subathon_state","total_seconds":%d,"running":%t}`, curSecs, isRunning)
 	h.hub.Broadcast(keyHash, []byte(msg))
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }

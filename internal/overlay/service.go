@@ -25,6 +25,7 @@ type Service interface {
 	UpdateMediashareTemplate(ctx context.Context, userID string, req MediashareTemplateRequest) error
 	UpdateQRSettings(ctx context.Context, userID string, req QRSettingsRequest) error
 	UpdateMilestoneSettings(ctx context.Context, userID string, req MilestoneSettingsRequest) error
+	UpdateSubathonSettings(ctx context.Context, userID string, req SubathonSettingsRequest) error
 }
 
 type AlertRulesRequest struct {
@@ -86,6 +87,19 @@ type MilestoneSettingsRequest struct {
 	FontWeight  int     `json:"ms_font_weight_ms"`
 	FontTitle   string  `json:"ms_font_title"`
 	FontContent string  `json:"ms_font_content"`
+}
+
+type SubathonSettingsRequest struct {
+	InitialHours   int                `json:"sub_initial_hours"`
+	InitialMinutes int                `json:"sub_initial_minutes"`
+	InitialSeconds int                `json:"sub_initial_seconds"`
+	NoBorder       bool               `json:"sub_no_border"`
+	BgColor        string             `json:"sub_bg_color"`
+	AutoPlay       bool               `json:"sub_auto_play"`
+	TextColor      string             `json:"sub_text_color"`
+	FontWeight     int                `json:"sub_font_weight"`
+	FontContent    string             `json:"sub_font_content"`
+	TimeRules      []SubathonTimeRule `json:"sub_time_rules"`
 }
 
 type service struct {
@@ -236,5 +250,23 @@ func (s *service) UpdateMilestoneSettings(ctx context.Context, userID string, re
 		FontWeight:  req.FontWeight,
 		FontTitle:   req.FontTitle,
 		FontContent: req.FontContent,
+	})
+}
+
+func (s *service) UpdateSubathonSettings(ctx context.Context, userID string, req SubathonSettingsRequest) error {
+	if _, err := s.GetSettings(ctx, userID); err != nil {
+		return err
+	}
+	return s.repo.UpdateSubathonSettings(ctx, userID, SubathonSettingsFields{
+		InitialHours:   req.InitialHours,
+		InitialMinutes: req.InitialMinutes,
+		InitialSeconds: req.InitialSeconds,
+		NoBorder:       req.NoBorder,
+		BgColor:        req.BgColor,
+		AutoPlay:       req.AutoPlay,
+		TextColor:      req.TextColor,
+		FontWeight:     req.FontWeight,
+		FontContent:    req.FontContent,
+		TimeRules:      req.TimeRules,
 	})
 }

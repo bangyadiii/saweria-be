@@ -40,9 +40,9 @@ func main() {
 	userRepo := user.NewRepository(db)
 	overlayRepo := overlay.NewRepository(db)
 	donationRepo := donation.NewRepository(db)
-	walletRepo  := wallet.NewRepository(db)
+	walletRepo := wallet.NewRepository(db)
 	alertqueueRepo := alertqueue.NewRepository(db)
-	widgetRepo  := widgets.NewRepository(db)
+	widgetRepo := widgets.NewRepository(db)
 	// ── WebSocket hub ─────────────────────────────────────────────────────────
 	hub := wshub.NewHub()
 
@@ -56,7 +56,7 @@ func main() {
 	mtClient := payment.NewMidtransClient(cfg.MidtransServerKey, cfg.MidtransClientKey, cfg.MidtransEnvironment)
 
 	// ── services ──────────────────────────────────────────────────────────────
-	authSvc    := auth.NewService(authRepo, cfg.JWTSecret, cfg.JWTRefreshSecret, cfg.JWTExpiryHours, cfg.JWTRefreshExpiryDays)
+	authSvc := auth.NewService(authRepo, cfg.JWTSecret, cfg.JWTRefreshSecret, cfg.JWTExpiryHours, cfg.JWTRefreshExpiryDays)
 	userSvc := user.NewService(userRepo)
 	overlaySvc := overlay.NewService(overlayRepo)
 	donationSvc := donation.NewService(donationRepo, userRepo, overlayRepo, mtClient)
@@ -120,6 +120,8 @@ func main() {
 		o.PUT("/mediashare/template", overlayHandler.UpdateMediashareTemplate)
 		o.PUT("/qr", overlayHandler.UpdateQRSettings)
 		o.PUT("/milestone", overlayHandler.UpdateMilestoneSettings)
+		o.PUT("/subathon", overlayHandler.UpdateSubathonSettings)
+		o.POST("/subathon/control", overlayHandler.SubathonControl)
 		o.POST("/test-alert", overlayHandler.TestAlert)
 		o.POST("/test-mediashare", overlayHandler.TestMediashare)
 		o.POST("/control", overlayHandler.Control)

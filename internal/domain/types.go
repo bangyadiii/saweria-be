@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type User struct {
 	ID           string    `db:"id"            json:"id"`
@@ -60,17 +63,28 @@ type OverlaySettings struct {
 	QRLabelBottom     string `db:"qr_label_bottom"     json:"qr_label_bottom"`
 	QRFontFamily      string `db:"qr_font_family"      json:"qr_font_family"`
 	// Milestone widget settings
-	MilestoneTitle       string    `db:"ms_title"          json:"ms_title"`
-	MilestoneTarget      int64     `db:"ms_target"         json:"ms_target"`
-	MilestoneStartDate   *string   `db:"ms_start_date"     json:"ms_start_date"`
-	MilestoneBgColor     string    `db:"ms_bg_color"       json:"ms_bg_color"`
-	MilestoneTextColor   string    `db:"ms_text_color_ms"  json:"ms_text_color_ms"`
-	MilestoneNoBorder    bool      `db:"ms_no_border_ms"   json:"ms_no_border_ms"`
-	MilestoneFontWeight  int       `db:"ms_font_weight_ms" json:"ms_font_weight_ms"`
-	MilestoneFontTitle   string    `db:"ms_font_title"     json:"ms_font_title"`
-	MilestoneFontContent string    `db:"ms_font_content"   json:"ms_font_content"`
-	CreatedAt            time.Time `db:"created_at"        json:"created_at"`
-	UpdatedAt            time.Time `db:"updated_at"        json:"updated_at"`
+	MilestoneTitle       string  `db:"ms_title"          json:"ms_title"`
+	MilestoneTarget      int64   `db:"ms_target"         json:"ms_target"`
+	MilestoneStartDate   *string `db:"ms_start_date"     json:"ms_start_date"`
+	MilestoneBgColor     string  `db:"ms_bg_color"       json:"ms_bg_color"`
+	MilestoneTextColor   string  `db:"ms_text_color_ms"  json:"ms_text_color_ms"`
+	MilestoneNoBorder    bool    `db:"ms_no_border_ms"   json:"ms_no_border_ms"`
+	MilestoneFontWeight  int     `db:"ms_font_weight_ms" json:"ms_font_weight_ms"`
+	MilestoneFontTitle   string  `db:"ms_font_title"     json:"ms_font_title"`
+	MilestoneFontContent string  `db:"ms_font_content"   json:"ms_font_content"`
+	// Subathon widget settings
+	SubInitialHours   int       `db:"sub_initial_hours"   json:"sub_initial_hours"`
+	SubInitialMinutes int       `db:"sub_initial_minutes" json:"sub_initial_minutes"`
+	SubInitialSeconds int       `db:"sub_initial_seconds" json:"sub_initial_seconds"`
+	SubNoBorder       bool      `db:"sub_no_border"       json:"sub_no_border"`
+	SubBgColor        string    `db:"sub_bg_color"        json:"sub_bg_color"`
+	SubAutoPlay       bool      `db:"sub_auto_play"       json:"sub_auto_play"`
+	SubTextColor      string    `db:"sub_text_color"      json:"sub_text_color"`
+	SubFontWeight     int       `db:"sub_font_weight"     json:"sub_font_weight"`
+	SubFontContent    string    `db:"sub_font_content"    json:"sub_font_content"`
+	SubTimeRules      json.RawMessage `db:"sub_time_rules"      json:"sub_time_rules"`
+	CreatedAt         time.Time `db:"created_at"       json:"created_at"`
+	UpdatedAt         time.Time `db:"updated_at"       json:"updated_at"`
 }
 
 type Donation struct {

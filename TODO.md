@@ -33,6 +33,11 @@ Legend: ✅ Selesai · ❌ Belum dibuat · 🔧 Sebagian
 - ✅ `migrations/004_create_cashouts.up/down.sql`
 - ✅ `migrations/005_rename_snap_token.up/down.sql` — migrasi kolom lama ke `payment_token`
 - ✅ `migrations/006_create_alert_queue.up/down.sql` — server-side alert queue table
+- ✅ `migrations/007_create_mediashare_settings.up/down.sql` — tabel mediashare template
+- ✅ `migrations/008_create_qr_settings.up/down.sql` — tabel QR code settings
+- ✅ `migrations/009_create_milestone_settings.up/down.sql` — tabel milestone settings
+- ✅ `migrations/010_add_tts_to_alert.up/down.sql` — kolom TTS di alert rules
+- ✅ `migrations/011_create_subathon_settings.up/down.sql` — tabel subathon settings & time rules
 
 ---
 
@@ -56,9 +61,17 @@ Legend: ✅ Selesai · ❌ Belum dibuat · 🔧 Sebagian
 
 ## 4. Overlay Settings (`internal/overlay/`)
 
-- ✅ `repository.go` — `FindByUserID`, `Upsert`, `UpdateStreamKey`, `FindByStreamKey`
-- ✅ `service.go` — `GetSettings`, `UpdateAlertRules`, `UpdateTemplate`, `UpdateFilterKata`, `UpdateSound`, `ResetStreamKey`
-- ✅ `handler.go` — `GET /overlay/settings`, `PUT /overlay/alert`, `PUT /overlay/template`, `PUT /overlay/filter`, `PUT /overlay/sound`, `POST /overlay/stream-key/reset`
+- ✅ `repository.go` — `FindByUserID`, `Upsert`, `UpdateStreamKey`, `FindByStreamKey`, mediashare/milestone/subathon CRUD
+- ✅ `service.go` — `GetSettings`, `UpdateAlertRules`, `UpdateTemplate`, `UpdateFilterKata`, `UpdateSound`, `ResetStreamKey`, `UpdateMediashareTemplate`, `UpdateMilestone`, `UpdateSubathon`
+- ✅ `handler.go` — semua endpoint overlay:
+    - `GET /overlay/settings`
+    - `PUT /overlay/alert`, `PUT /overlay/template`, `PUT /overlay/filter`, `PUT /overlay/sound`
+    - `POST /overlay/stream-key/reset`
+    - `POST /overlay/test-alert` — broadcast WS alert ke widget
+    - `PUT /overlay/mediashare-template`
+    - `POST /overlay/test-mediashare` — broadcast WS mediashare ke widget
+    - `PUT /overlay/milestone`
+    - `PUT /overlay/subathon`, `POST /overlay/subathon/control` — start/pause/add_time + broadcast `subathon_state`
 
 ---
 
@@ -91,7 +104,9 @@ Legend: ✅ Selesai · ❌ Belum dibuat · 🔧 Sebagian
 ## 8. WebSocket (`internal/websocket/`)
 
 - ✅ `hub.go` — `Hub` struct, `Register`, `Unregister`, `Broadcast` (dengan `SetWriteDeadline` + dead conn cleanup)
+- ✅ `hub.go` — in-memory subathon timer state: `subathonState{totalSeconds, running, lastUpdated}`, `SetSubathonState`, `GetSubathonSeconds`; `current()` memperhitungkan elapsed time saat running
 - ✅ `handler.go` — `GET /ws?key={streamKey}`, manual ping/pong (`pingInterval=5s`, `pongWait=10s`), done channel, LIFO defers
+- ✅ `handler.go` — pada WS connect, kirim `subathon_state` langsung jika state ada di hub
 
 ---
 
