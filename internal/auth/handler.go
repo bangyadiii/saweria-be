@@ -59,6 +59,10 @@ func (h *Handler) Register(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": "username already taken"})
 		return
 	}
+	if errors.Is(err, ErrUsernameReserved) {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "username is reserved and cannot be used"})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return

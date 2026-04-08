@@ -11,16 +11,16 @@ type User struct {
 	Username     string  `db:"username"      json:"username"`
 	PasswordHash *string `db:"password_hash" json:"-"`
 	GoogleID     *string `db:"google_id"     json:"-"`
-	ProfileImage *string `db:"profile_image" json:"profileImage"`
-	DisplayName  string  `db:"display_name"  json:"displayName"`
+	ProfileImage *string `db:"profile_image" json:"profile_image"`
+	DisplayName  string  `db:"display_name"  json:"display_name"`
 	Bio          string  `db:"bio"           json:"bio"`
 	Balance      int64   `db:"balance"       json:"balance"`
 	// Webhook settings
-	WebhookEnabled bool      `db:"webhook_enabled" json:"webhookEnabled"`
-	WebhookURL     *string   `db:"webhook_url"     json:"webhookUrl"`
-	WebhookToken   *string   `db:"webhook_token"   json:"webhookToken"`
-	CreatedAt      time.Time `db:"created_at"    json:"createdAt"`
-	UpdatedAt      time.Time `db:"updated_at"    json:"updatedAt"`
+	WebhookEnabled bool      `db:"webhook_enabled" json:"webhook_enabled"`
+	WebhookURL     *string   `db:"webhook_url"     json:"webhook_url"`
+	WebhookToken   *string   `db:"webhook_token"   json:"webhook_token"`
+	CreatedAt      time.Time `db:"created_at"    json:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at"    json:"updated_at"`
 }
 
 type OverlaySettings struct {

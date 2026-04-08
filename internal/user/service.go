@@ -25,15 +25,16 @@ type Service interface {
 	GetMe(ctx context.Context, userID string) (*domain.User, error)
 	GetPublicProfile(ctx context.Context, username string) (*domain.User, error)
 	UpdateProfile(ctx context.Context, userID string, req UpdateProfileRequest) (*domain.User, error)
+	UploadProfileImage(ctx context.Context, userID string, imageURL string) (*domain.User, error)
 	UpdateWebhookSettings(ctx context.Context, userID string, req UpdateWebhookRequest) (*domain.User, error)
 	ResetWebhookToken(ctx context.Context, userID string) (*domain.User, error)
 	TestWebhook(ctx context.Context, userID string) error
 }
 
 type UpdateProfileRequest struct {
-	DisplayName  string  `json:"displayName"`
+	DisplayName  string  `json:"display_name"`
 	Bio          string  `json:"bio"`
-	ProfileImage *string `json:"profileImage"`
+	ProfileImage *string `json:"profile_image"`
 }
 
 type UpdateWebhookRequest struct {
@@ -79,6 +80,25 @@ func (s *service) UpdateProfile(ctx context.Context, userID string, req UpdatePr
 	})
 	if err != nil {
 		return nil, fmt.Errorf("user.UpdateProfile: %w", err)
+	}
+	return u, nil
+}
+
+func (s *service) UploadProfileImage(ctx context.Context, userID string, imageURL string) (*domain.User, error) {
+	current, err := s.repo.FindByID(ctx, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("user.UploadProfileImage: %w", err)
+	}
+	u, err := s.repo.Update(ctx, userID, UpdateFields{
+		DisplayName:  current.DisplayName,
+		Bio:          current.Bio,
+		ProfileImage: &imageURL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("user.UploadProfileImage: %w", err)
 	}
 	return u, nil
 }

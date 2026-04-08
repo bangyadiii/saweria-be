@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"saweria-be/internal/domain"
@@ -14,11 +15,66 @@ import (
 )
 
 var (
-	ErrEmailTaken    = errors.New("email already registered")
-	ErrUsernameTaken = errors.New("username already taken")
-	ErrInvalidCreds  = errors.New("invalid email or password")
-	ErrUserNotFound  = errors.New("user not found")
+	ErrEmailTaken       = errors.New("email already registered")
+	ErrUsernameTaken    = errors.New("username already taken")
+	ErrUsernameReserved = errors.New("username is reserved")
+	ErrInvalidCreds     = errors.New("invalid email or password")
+	ErrUserNotFound     = errors.New("user not found")
 )
+
+// reservedUsernames lists usernames that must not be claimed by any user because
+// they collide with frontend routes, backend API paths, or well-known system
+// accounts. Add entries in lowercase; comparison is case-insensitive.
+var reservedUsernames = map[string]struct{}{
+	// ── frontend app routes ───────────────────────────────────────────────────
+	"login":       {},
+	"register":    {},
+	"dashboard":   {},
+	"profile":     {},
+	"donations":   {},
+	"overlay":     {},
+	"integration": {},
+	"mabar":       {},
+	"widget":      {},
+	"api":         {},
+	// ── backend API path segments ─────────────────────────────────────────────
+	"auth":      {},
+	"users":     {},
+	"me":        {},
+	"payment":   {},
+	"wallet":    {},
+	"websocket": {},
+	"ws":        {},
+	"webhook":   {},
+	// ── reserved admin / system accounts ─────────────────────────────────────
+	"admin":      {},
+	"superadmin": {},
+	"root":       {},
+	"system":     {},
+	"support":    {},
+	"help":       {},
+	"info":       {},
+	"contact":    {},
+	"mail":       {},
+	"noreply":    {},
+	"no-reply":   {},
+	"bot":        {},
+	"staff":      {},
+	"moderator":  {},
+	"mod":        {},
+	"owner":      {},
+	// ── brand / product names ─────────────────────────────────────────────────
+	"saweria":    {},
+	"tako":       {},
+	"saweria-be": {},
+	"official":   {},
+	// ── common abuse targets ──────────────────────────────────────────────────
+	"null":      {},
+	"undefined": {},
+	"anonymous": {},
+	"test":      {},
+	"demo":      {},
+}
 
 type TokenPair struct {
 	Token        string `json:"token"`
@@ -51,6 +107,10 @@ func NewService(repo Repository, jwtSecret, jwtRefreshSecret string, expiryHours
 }
 
 func (s *service) Register(ctx context.Context, email, username, password string) (*domain.User, *TokenPair, error) {
+	if _, ok := reservedUsernames[strings.ToLower(username)]; ok {
+		return nil, nil, ErrUsernameReserved
+	}
+
 	if _, err := s.repo.FindByEmail(ctx, email); err == nil {
 		return nil, nil, ErrEmailTaken
 	} else if !errors.Is(err, sql.ErrNoRows) {

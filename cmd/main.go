@@ -71,7 +71,7 @@ func main() {
 
 	// ── handlers ──────────────────────────────────────────────────────────────
 	authHandler := auth.NewHandler(authSvc, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.BaseURL)
-	userHandler := user.NewHandler(userSvc)
+	userHandler := user.NewHandler(userSvc, cfg.BaseURL)
 	overlayHandler := overlay.NewHandler(overlaySvc, hub, userRepo)
 	donationHandler := donation.NewHandler(donationSvc, cfg.PlatformFeePercent)
 	paymentHandler := payment.NewHandler(paymentSvc, cfg.MidtransServerKey)
@@ -108,6 +108,7 @@ func main() {
 	{
 		u.GET("/me", jwtMiddleware, userHandler.GetMe)
 		u.PUT("/me", jwtMiddleware, userHandler.UpdateMe)
+		u.PUT("/me/image", jwtMiddleware, userHandler.UploadProfileImage)
 		u.GET("/:username", userHandler.GetPublicProfile)
 		u.GET("/:username/mediashare", overlayHandler.GetPublicMediashare)
 		u.GET("/:username/mabar", overlayHandler.GetPublicMabar)
