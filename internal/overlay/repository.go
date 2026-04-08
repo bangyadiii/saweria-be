@@ -25,6 +25,8 @@ type Repository interface {
 	UpdateMilestoneSettings(ctx context.Context, userID string, f MilestoneSettingsFields) error
 	UpdateSubathonSettings(ctx context.Context, userID string, f SubathonSettingsFields) error
 	UpdateLeaderboardSettings(ctx context.Context, userID string, f LeaderboardSettingsFields) error
+	UpdateMabarSettings(ctx context.Context, userID string, f MabarSettingsFields) error
+	FindByUsername(ctx context.Context, username string) (*domain.OverlaySettings, error)
 }
 
 type AlertRulesFields struct {
@@ -106,6 +108,14 @@ type LeaderboardSettingsFields struct {
 	FontContent string
 	TimeRange   string
 	Limit       int
+}
+
+type MabarSettingsFields struct {
+	Enabled         bool
+	Keyword         string
+	MinimumAmount   int64
+	GoldThreshold   int64
+	SilverThreshold int64
 }
 
 type SubathonSettingsFields struct {
@@ -386,3 +396,33 @@ func (r *repository) UpdateLeaderboardSettings(ctx context.Context, userID strin
 	return nil
 }
 
+func (r *repository) UpdateMabarSettings(ctx context.Context, userID string, f MabarSettingsFields) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE overlay_settings
+		SET mabar_enabled          = $1,
+		    mabar_keyword          = $2,
+		    mabar_minimum_amount   = $3,
+		    mabar_gold_threshold   = $4,
+		    mabar_silver_threshold = $5,
+		    updated_at             = NOW()
+		WHERE user_id = $6`,
+		f.Enabled, f.Keyword, f.MinimumAmount, f.GoldThreshold, f.SilverThreshold, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("overlay.UpdateMabarSettings: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) FindByUsername(ctx context.Context, username string) (*domain.OverlaySettings, error) {
+	var s domain.OverlaySettings
+	err := r.db.GetContext(ctx, &s, `
+		SELECT os.* FROM overlay_settings os
+		JOIN users u ON u.id = os.user_id
+		WHERE u.username = $1
+		LIMIT 1`, username)
+	if err != nil {
+		return nil, fmt.Errorf("overlay.FindByUsername: %w", err)
+	}
+	return &s, nil
+}

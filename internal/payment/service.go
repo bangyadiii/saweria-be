@@ -27,6 +27,16 @@ type AlertQueueEnqueuer interface {
 	Enqueue(ctx context.Context, streamerID, donationID string) error
 }
 
+// MabarEnqueuer tries to add a donation to the mabar queue based on overlay settings.
+type MabarEnqueuer interface {
+	TryEnqueue(ctx context.Context, donation *domain.Donation, settings *domain.OverlaySettings) error
+}
+
+// OverlaySettingsGetter fetches overlay settings by user ID.
+type OverlaySettingsGetter interface {
+	FindByUserID(ctx context.Context, userID string) (*domain.OverlaySettings, error)
+}
+
 type WebhookPayload struct {
 	OrderID           string `json:"order_id"`
 	StatusCode        string `json:"status_code"`
@@ -45,11 +55,13 @@ type service struct {
 	donationRepo DonationRepository
 	walletRepo   WalletRepository
 	alertQueue   AlertQueueEnqueuer
+	mabarSvc     MabarEnqueuer
+	overlayRepo  OverlaySettingsGetter
 	feePercent   float64
 }
 
-func NewService(dr DonationRepository, wr WalletRepository, alertQueue AlertQueueEnqueuer, feePercent float64) Service {
-	return &service{donationRepo: dr, walletRepo: wr, alertQueue: alertQueue, feePercent: feePercent}
+func NewService(dr DonationRepository, wr WalletRepository, alertQueue AlertQueueEnqueuer, mabarSvc MabarEnqueuer, overlayRepo OverlaySettingsGetter, feePercent float64) Service {
+	return &service{donationRepo: dr, walletRepo: wr, alertQueue: alertQueue, mabarSvc: mabarSvc, overlayRepo: overlayRepo, feePercent: feePercent}
 }
 
 func (s *service) ProcessWebhook(ctx context.Context, payload WebhookPayload, serverKey string) error {
@@ -86,6 +98,15 @@ func (s *service) ProcessWebhook(ctx context.Context, payload WebhookPayload, se
 		}
 		if err := s.alertQueue.Enqueue(ctx, donation.StreamerID, donation.ID); err != nil {
 			log.Printf("payment.ProcessWebhook: enqueue alert: %v", err)
+		}
+		// Try to enqueue into mabar queue (non-fatal)
+		if s.mabarSvc != nil && s.overlayRepo != nil {
+			overlaySettings, overlayErr := s.overlayRepo.FindByUserID(ctx, donation.StreamerID)
+			if overlayErr == nil {
+				if mabarErr := s.mabarSvc.TryEnqueue(ctx, donation, overlaySettings); mabarErr != nil {
+					log.Printf("payment.ProcessWebhook: mabar enqueue: %v", mabarErr)
+				}
+			}
 		}
 	}
 

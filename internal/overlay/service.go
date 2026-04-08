@@ -27,6 +27,8 @@ type Service interface {
 	UpdateMilestoneSettings(ctx context.Context, userID string, req MilestoneSettingsRequest) error
 	UpdateSubathonSettings(ctx context.Context, userID string, req SubathonSettingsRequest) error
 	UpdateLeaderboardSettings(ctx context.Context, userID string, req LeaderboardSettingsRequest) error
+	UpdateMabarSettings(ctx context.Context, userID string, req MabarSettingsRequest) error
+	GetSettingsByUsername(ctx context.Context, username string) (*domain.OverlaySettings, error)
 }
 
 type AlertRulesRequest struct {
@@ -114,6 +116,14 @@ type LeaderboardSettingsRequest struct {
 	FontContent string `json:"lb_font_content"`
 	TimeRange   string `json:"lb_time_range"`
 	Limit       int    `json:"lb_limit"`
+}
+
+type MabarSettingsRequest struct {
+	Enabled         bool   `json:"mabar_enabled"`
+	Keyword         string `json:"mabar_keyword"`
+	MinimumAmount   int64  `json:"mabar_minimum_amount"`
+	GoldThreshold   int64  `json:"mabar_gold_threshold"`
+	SilverThreshold int64  `json:"mabar_silver_threshold"`
 }
 
 type service struct {
@@ -305,4 +315,25 @@ func (s *service) UpdateLeaderboardSettings(ctx context.Context, userID string, 
 		TimeRange:   req.TimeRange,
 		Limit:       limit,
 	})
+}
+
+func (s *service) UpdateMabarSettings(ctx context.Context, userID string, req MabarSettingsRequest) error {
+	if _, err := s.GetSettings(ctx, userID); err != nil {
+		return err
+	}
+	keyword := req.Keyword
+	if keyword == "" {
+		keyword = "!mabar"
+	}
+	return s.repo.UpdateMabarSettings(ctx, userID, MabarSettingsFields{
+		Enabled:         req.Enabled,
+		Keyword:         keyword,
+		MinimumAmount:   req.MinimumAmount,
+		GoldThreshold:   req.GoldThreshold,
+		SilverThreshold: req.SilverThreshold,
+	})
+}
+
+func (s *service) GetSettingsByUsername(ctx context.Context, username string) (*domain.OverlaySettings, error) {
+	return s.repo.FindByUsername(ctx, username)
 }

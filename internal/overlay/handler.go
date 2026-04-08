@@ -473,6 +473,37 @@ func (h *Handler) UpdateLeaderboardSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
+func (h *Handler) UpdateMabarSettings(c *gin.Context) {
+	userID := c.GetString("user_id")
+	var req MabarSettingsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.service.UpdateMabarSettings(c.Request.Context(), userID, req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+}
+
+// GetPublicMabar returns whether mabar is enabled and its trigger info for the donation page.
+// This endpoint is intentionally unauthenticated.
+func (h *Handler) GetPublicMabar(c *gin.Context) {
+	username := c.Param("username")
+	settings, err := h.service.GetSettingsByUsername(c.Request.Context(), username)
+	if err != nil {
+		// Return disabled state gracefully if user not found
+		c.JSON(http.StatusOK, gin.H{"message": "ok", "data": gin.H{"mabar_enabled": false}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ok", "data": gin.H{
+		"mabar_enabled":        settings.MabarEnabled,
+		"mabar_keyword":        settings.MabarKeyword,
+		"mabar_minimum_amount": settings.MabarMinimumAmount,
+	}})
+}
+
 // GetPublicMediashare returns the mediashare settings a donor needs to decide
 // whether to show the media input section on the public donation page.
 // This endpoint is intentionally unauthenticated.

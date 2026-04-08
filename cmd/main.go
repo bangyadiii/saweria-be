@@ -9,6 +9,7 @@ import (
 	"saweria-be/internal/alertqueue"
 	"saweria-be/internal/auth"
 	"saweria-be/internal/donation"
+	"saweria-be/internal/mabar"
 	"saweria-be/internal/overlay"
 	"saweria-be/internal/payment"
 	"saweria-be/internal/user"
@@ -43,6 +44,7 @@ func main() {
 	walletRepo := wallet.NewRepository(db)
 	alertqueueRepo := alertqueue.NewRepository(db)
 	widgetRepo := widgets.NewRepository(db)
+	mabarRepo := mabar.NewRepository(db)
 	// ── WebSocket hub ─────────────────────────────────────────────────────────
 	hub := wshub.NewHub()
 
@@ -60,7 +62,8 @@ func main() {
 	userSvc := user.NewService(userRepo)
 	overlaySvc := overlay.NewService(overlayRepo)
 	donationSvc := donation.NewService(donationRepo, userRepo, overlayRepo, mtClient)
-	paymentSvc := payment.NewService(donationRepo, walletRepo, alertManager, cfg.PlatformFeePercent)
+	mabarSvc := mabar.NewService(mabarRepo)
+	paymentSvc := payment.NewService(donationRepo, walletRepo, alertManager, mabarSvc, overlayRepo, cfg.PlatformFeePercent)
 	walletSvc := wallet.NewService(walletRepo)
 	widgetHandler := widgets.NewHandler(widgetRepo, overlayRepo, userRepo)
 	// ── WS overlay lookup adapter ─────────────────────────────────────────────
@@ -73,7 +76,8 @@ func main() {
 	donationHandler := donation.NewHandler(donationSvc, cfg.PlatformFeePercent)
 	paymentHandler := payment.NewHandler(paymentSvc, cfg.MidtransServerKey)
 	walletHandler := wallet.NewHandler(walletSvc)
-	wsHandler := wshub.NewHandler(hub, wsLookup)
+	weHandler := wshub.NewHandler(hub, wsLookup)
+	mabarHandler := mabar.NewHandler(mabarSvc)
 
 	// ── router ────────────────────────────────────────────────────────────────
 	r := gin.Default()
@@ -106,6 +110,7 @@ func main() {
 		u.PUT("/me", jwtMiddleware, userHandler.UpdateMe)
 		u.GET("/:username", userHandler.GetPublicProfile)
 		u.GET("/:username/mediashare", overlayHandler.GetPublicMediashare)
+		u.GET("/:username/mabar", overlayHandler.GetPublicMabar)
 		u.PUT("/me/webhook", jwtMiddleware, userHandler.UpdateWebhookSettings)
 		u.POST("/me/webhook/reset-token", jwtMiddleware, userHandler.ResetWebhookToken)
 		u.POST("/me/webhook/test", jwtMiddleware, userHandler.TestWebhook)
@@ -127,6 +132,7 @@ func main() {
 		o.PUT("/subathon", overlayHandler.UpdateSubathonSettings)
 		o.POST("/subathon/control", overlayHandler.SubathonControl)
 		o.PUT("/leaderboard", overlayHandler.UpdateLeaderboardSettings)
+		o.PUT("/mabar", overlayHandler.UpdateMabarSettings)
 		o.POST("/test-alert", overlayHandler.TestAlert)
 		o.POST("/test-mediashare", overlayHandler.TestMediashare)
 		o.POST("/control", overlayHandler.Control)
@@ -151,6 +157,15 @@ func main() {
 		w.GET("/cashout/history", walletHandler.GetCashoutHistory)
 	}
 
+	// Mabar queue (all protected)
+	mb := r.Group("/mabar", jwtMiddleware)
+	{
+		mb.GET("/queue", mabarHandler.GetQueue)
+		mb.PUT("/queue/reorder", mabarHandler.Reorder)
+		mb.PUT("/queue/:id/done", mabarHandler.MarkDone)
+		mb.DELETE("/queue", mabarHandler.ClearAll)
+	}
+
 	// Public widget data endpoints (authenticated by streamKey)
 	wg := r.Group("/widgets")
 	{
@@ -162,7 +177,7 @@ func main() {
 	r.Static("/uploads", "./uploads")
 
 	// WebSocket
-	r.GET("/ws", wsHandler.Connect)
+	r.GET("/ws", weHandler.Connect)
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {

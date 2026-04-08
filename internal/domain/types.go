@@ -6,21 +6,21 @@ import (
 )
 
 type User struct {
-	ID           string    `db:"id"            json:"id"`
-	Email        string    `db:"email"         json:"email"`
-	Username     string    `db:"username"      json:"username"`
-	PasswordHash *string   `db:"password_hash" json:"-"`
-	GoogleID     *string   `db:"google_id"     json:"-"`
-	ProfileImage *string   `db:"profile_image" json:"profileImage"`
-	DisplayName  string    `db:"display_name"  json:"displayName"`
-	Bio          string    `db:"bio"           json:"bio"`
-	Balance      int64     `db:"balance"       json:"balance"`
+	ID           string  `db:"id"            json:"id"`
+	Email        string  `db:"email"         json:"email"`
+	Username     string  `db:"username"      json:"username"`
+	PasswordHash *string `db:"password_hash" json:"-"`
+	GoogleID     *string `db:"google_id"     json:"-"`
+	ProfileImage *string `db:"profile_image" json:"profileImage"`
+	DisplayName  string  `db:"display_name"  json:"displayName"`
+	Bio          string  `db:"bio"           json:"bio"`
+	Balance      int64   `db:"balance"       json:"balance"`
 	// Webhook settings
-	WebhookEnabled bool    `db:"webhook_enabled" json:"webhookEnabled"`
-	WebhookURL     *string `db:"webhook_url"     json:"webhookUrl"`
-	WebhookToken   *string `db:"webhook_token"   json:"webhookToken"`
-	CreatedAt    time.Time `db:"created_at"    json:"createdAt"`
-	UpdatedAt    time.Time `db:"updated_at"    json:"updatedAt"`
+	WebhookEnabled bool      `db:"webhook_enabled" json:"webhookEnabled"`
+	WebhookURL     *string   `db:"webhook_url"     json:"webhookUrl"`
+	WebhookToken   *string   `db:"webhook_token"   json:"webhookToken"`
+	CreatedAt      time.Time `db:"created_at"    json:"createdAt"`
+	UpdatedAt      time.Time `db:"updated_at"    json:"updatedAt"`
 }
 
 type OverlaySettings struct {
@@ -77,15 +77,15 @@ type OverlaySettings struct {
 	MilestoneFontTitle   string  `db:"ms_font_title"     json:"ms_font_title"`
 	MilestoneFontContent string  `db:"ms_font_content"   json:"ms_font_content"`
 	// Subathon widget settings
-	SubInitialHours   int       `db:"sub_initial_hours"   json:"sub_initial_hours"`
-	SubInitialMinutes int       `db:"sub_initial_minutes" json:"sub_initial_minutes"`
-	SubInitialSeconds int       `db:"sub_initial_seconds" json:"sub_initial_seconds"`
-	SubNoBorder       bool      `db:"sub_no_border"       json:"sub_no_border"`
-	SubBgColor        string    `db:"sub_bg_color"        json:"sub_bg_color"`
-	SubAutoPlay       bool      `db:"sub_auto_play"       json:"sub_auto_play"`
-	SubTextColor      string    `db:"sub_text_color"      json:"sub_text_color"`
-	SubFontWeight     int       `db:"sub_font_weight"     json:"sub_font_weight"`
-	SubFontContent    string    `db:"sub_font_content"    json:"sub_font_content"`
+	SubInitialHours   int             `db:"sub_initial_hours"   json:"sub_initial_hours"`
+	SubInitialMinutes int             `db:"sub_initial_minutes" json:"sub_initial_minutes"`
+	SubInitialSeconds int             `db:"sub_initial_seconds" json:"sub_initial_seconds"`
+	SubNoBorder       bool            `db:"sub_no_border"       json:"sub_no_border"`
+	SubBgColor        string          `db:"sub_bg_color"        json:"sub_bg_color"`
+	SubAutoPlay       bool            `db:"sub_auto_play"       json:"sub_auto_play"`
+	SubTextColor      string          `db:"sub_text_color"      json:"sub_text_color"`
+	SubFontWeight     int             `db:"sub_font_weight"     json:"sub_font_weight"`
+	SubFontContent    string          `db:"sub_font_content"    json:"sub_font_content"`
 	SubTimeRules      json.RawMessage `db:"sub_time_rules"      json:"sub_time_rules"`
 	// Leaderboard widget settings
 	LbTitle       string `db:"lb_title"        json:"lb_title"`
@@ -98,8 +98,28 @@ type OverlaySettings struct {
 	LbFontContent string `db:"lb_font_content" json:"lb_font_content"`
 	LbTimeRange   string `db:"lb_time_range"   json:"lb_time_range"`
 	LbLimit       int    `db:"lb_limit"        json:"lb_limit"`
-	CreatedAt         time.Time `db:"created_at"       json:"created_at"`
-	UpdatedAt         time.Time `db:"updated_at"       json:"updated_at"`
+	// Mabar settings
+	MabarEnabled         bool      `db:"mabar_enabled"          json:"mabar_enabled"`
+	MabarKeyword         string    `db:"mabar_keyword"          json:"mabar_keyword"`
+	MabarMinimumAmount   int64     `db:"mabar_minimum_amount"   json:"mabar_minimum_amount"`
+	MabarGoldThreshold   int64     `db:"mabar_gold_threshold"   json:"mabar_gold_threshold"`
+	MabarSilverThreshold int64     `db:"mabar_silver_threshold" json:"mabar_silver_threshold"`
+	CreatedAt            time.Time `db:"created_at"       json:"created_at"`
+	UpdatedAt            time.Time `db:"updated_at"       json:"updated_at"`
+}
+
+type MabarQueueItem struct {
+	ID             string    `db:"id"              json:"id"`
+	StreamerID     string    `db:"streamer_id"     json:"streamer_id"`
+	DonationID     string    `db:"donation_id"     json:"donation_id"`
+	DonorName      string    `db:"donor_name"      json:"donor_name"`
+	IngameUsername string    `db:"ingame_username" json:"ingame_username"`
+	Amount         int64     `db:"amount"          json:"amount"`
+	PriorityTier   string    `db:"priority_tier"   json:"priority_tier"`
+	PriorityOrder  int       `db:"priority_order"  json:"priority_order"`
+	Status         string    `db:"status"          json:"status"`
+	CreatedAt      time.Time `db:"created_at"      json:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at"      json:"updated_at"`
 }
 
 type Donation struct {
